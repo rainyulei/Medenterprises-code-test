@@ -17,6 +17,16 @@ export class GildedRose {
     this.items = items;
   }
 
+  /**
+   * Adjusts the quality of a given item by a specified amount, ensuring the quality remains within valid bounds. max quality is 50 and min quality is 0.
+   * @param item - The item whose quality needs to be adjusted.
+   * @param amount - The amount by which the item's quality should be adjusted. Can be positive or negative.
+   */
+  adjustQuality(item: Item, amount: number): void {
+    item.quality = Math.min(50, Math.max(0, item.quality + amount));
+  }
+
+
   // Define the update rules for each item type
   updateRules = {
     // "Aged Brie" increases in quality over time
