@@ -26,17 +26,37 @@ export class GildedRose {
     item.quality = Math.min(50, Math.max(0, item.quality + amount));
   }
 
-
   // Define the update rules for each item type
   updateRules = {
     // "Aged Brie" increases in quality over time
-    "Aged Brie": (item: Item) => {},
+    "Aged Brie": (item: Item) => {
+      const qualityAmount = item.sellIn <= 0 ? 2 : 1;
+      this.adjustQuality(item, qualityAmount);
+      item.sellIn--;
+    },
     // "Backstage passes" increases in quality as the concert approaches
     // but drops to zero after the concert
-    "Backstage passes to a TAFKAL80ETC concert": (item: Item) => {},
+    "Backstage passes to a TAFKAL80ETC concert": (item: Item) => {
+      let qualityAmount = 0;
+      if (item.sellIn <= 0) {
+        qualityAmount = 0;
+      } else if (item.sellIn <= 5) {
+        qualityAmount = 3;
+      } else if (item.sellIn <= 10) {
+        qualityAmount = 2;
+      } else {
+        qualityAmount = 1;
+      }
+      this.adjustQuality(item, qualityAmount);
+      item.sellIn--;
+    },
 
     // "Conjured" items degrade in quality twice as fast as normal items
-    "Conjured": (item: Item) => {},
+    Conjured: (item: Item) => {
+      const qualityAmount = item.sellIn <= 0 ? -4 : -2;
+      this.adjustQuality(item, qualityAmount);
+      item.sellIn--;
+    },
 
     // "Sulfuras" is a legendary item and doesn't change in quality or sellIn
     "Sulfuras, Hand of Ragnaros": (item: Item) => {
@@ -44,64 +64,19 @@ export class GildedRose {
     },
 
     // Default rule for normal items
-    "default": (item: Item) => {},
+    default: (item: Item) => {
+      const qualityAmount = item.sellIn <= 0 ? -2 : -1;
+      this.adjustQuality(item, qualityAmount);
+      item.sellIn--;
+    },
   };
 
   updateQuality() {
     for (let i = 0; i < this.items.length; i++) {
-      if (
-        this.items[i].name != "Aged Brie" &&
-        this.items[i].name != "Backstage passes to a TAFKAL80ETC concert"
-      ) {
-        if (this.items[i].quality > 0) {
-          if (this.items[i].name != "Sulfuras, Hand of Ragnaros") {
-            this.items[i].quality = this.items[i].quality - 1;
-          }
-        }
-      } else {
-        if (this.items[i].quality < 50) {
-          this.items[i].quality = this.items[i].quality + 1;
-          if (
-            this.items[i].name == "Backstage passes to a TAFKAL80ETC concert"
-          ) {
-            if (this.items[i].sellIn < 11) {
-              if (this.items[i].quality < 50) {
-                this.items[i].quality = this.items[i].quality + 1;
-              }
-            }
-            if (this.items[i].sellIn < 6) {
-              if (this.items[i].quality < 50) {
-                this.items[i].quality = this.items[i].quality + 1;
-              }
-            }
-          }
-        }
-      }
-      if (this.items[i].name != "Sulfuras, Hand of Ragnaros") {
-        this.items[i].sellIn = this.items[i].sellIn - 1;
-      }
-      if (this.items[i].sellIn < 0) {
-        if (this.items[i].name != "Aged Brie") {
-          if (
-            this.items[i].name != "Backstage passes to a TAFKAL80ETC concert"
-          ) {
-            if (this.items[i].quality > 0) {
-              if (this.items[i].name != "Sulfuras, Hand of Ragnaros") {
-                this.items[i].quality = this.items[i].quality - 1;
-              }
-            }
-          } else {
-            this.items[i].quality =
-              this.items[i].quality - this.items[i].quality;
-          }
-        } else {
-          if (this.items[i].quality < 50) {
-            this.items[i].quality = this.items[i].quality + 1;
-          }
-        }
-      }
+      const item = this.items[i];
+      const rule = this.updateRules[item.name] || this.updateRules["default"];
+      rule(item);
     }
-
     return this.items;
   }
 }
